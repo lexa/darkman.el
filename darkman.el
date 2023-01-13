@@ -9,10 +9,22 @@
 
 (require 'dbus)
 
-(defvar darkman-themes '(:light modus-operandi :dark modus-vivendi)
-  "A property list which defines modes and their corresponding
-theme. The two properties, ‘:light’ and ‘:dark’ accept as their
-value a symbol name representing the theme.")
+(defgroup darkman nil
+  "Switch light/dark theme based on the time of day.")
+
+(define-widget 'darkman-choose-theme 'choice
+  "A simple chooser for available themes."
+  :tag "Theme")
+
+(defcustom darkman-dark-theme 'ef-day
+  "The dark theme to use."
+  :group 'darkman
+  :type `(choice ,@(mapcar (lambda (theme) (list 'const theme)) (custom-available-themes))))
+
+(defcustom darkman-light-theme 'modus-vivendi
+  "The light theme to use."
+  :group 'darkman
+  :type `(choice ,@(mapcar (lambda (theme) (list 'const theme)) (custom-available-themes))))
 
 (defvar darkman--dbus-service "nl.whynothugo.darkman")
 (defvar darkman--dbus-path (car (last (dbus-introspect-get-all-nodes :session darkman--dbus-service "/"))))
@@ -60,13 +72,13 @@ value a symbol name representing the theme.")
 		 darkman--dbus-service)))
 
 (defun darkman--get-assoc-theme (mode)
-  "Return a theme from ‘darkman-themes’ which corresponds to THEME."
-  (cond ((string= mode "dark") (plist-get darkman-themes :dark))
-	((string= mode "light") (plist-get darkman-themes :light))
+  "Return a theme which corresponds to the MODE."
+  (cond ((string= mode "dark") darkman-dark-theme)
+	((string= mode "light") darkman-light-theme)
 	(t (darkman--invalid-mode-error mode))))
 
 (defun darkman-get-theme ()
-  "Get a theme from the ‘darkman-themes’ which corresponds to the current mode."
+  "Get a theme which corresponds to the current mode."
   (let ((mode (darkman-get)))
     (darkman--get-assoc-theme mode)))
 
